@@ -1,24 +1,34 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router } from "react-router-dom";
+import AuthRouter from "./routers/AuthRouter";
+import PublicRouter from "./routers/PublicRouter";
+import { firebase } from "./config/firebase";
+import { useDispatch } from "react-redux";
+import { login } from "./actions/auth";
+import Loading from "./components/shared/Loading";
 
 function App() {
+  const [logged, setLogged] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user?.uid) {
+        dispatch(login(user.email, user.uid));
+        setLogged(true);
+        setLoading(false);
+        return;
+      } else {
+        setLogged(false);
+        setLoading(false);
+      }
+    });
+  }, [setLogged, dispatch]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className={logged ? "wrapper" : ""}>
+      <Router>{logged ? <AuthRouter /> : <PublicRouter />}</Router>
     </div>
   );
 }
